@@ -274,7 +274,7 @@
           </div>
         `;
 
-        if (existingPred && !alreadyPlayed) {
+        if (existingPred) {
           card.classList.add("locked");
           card.innerHTML = `
             ${teamHTML(homeTeam, homeData, 'home')}
@@ -284,7 +284,7 @@
             </div>
             ${teamHTML(awayTeam, awayData, 'away')}
           `;
-        } else if (isCurrentGW) {
+        } else if (isCurrentGW && !alreadyPlayed) {
           canPredict = true;
           card.innerHTML = `
             ${teamHTML(homeTeam, homeData, 'home')}
