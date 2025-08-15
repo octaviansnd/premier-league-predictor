@@ -294,6 +294,16 @@
             </div>
             ${teamHTML(awayTeam, awayData, 'away')}
           `;
+        } else if (alreadyPlayed) {
+          card.classList.add("locked");
+          card.innerHTML = `
+            ${teamHTML(homeTeam, homeData, 'home')}
+            <div style="flex:0 0 auto;text-align:center;">
+              <strong>${m[4]} - ${m[5]}</strong>
+            </div>
+            <div style="flex:0 0 auto;text-align:center;color:#888;">Match finished</div>
+            ${teamHTML(awayTeam, awayData, 'away')}
+          `;
         } else {
           card.classList.add("locked");
           card.innerHTML = `
