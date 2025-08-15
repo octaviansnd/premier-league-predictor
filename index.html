@@ -276,14 +276,29 @@
 
         if (existingPred) {
           card.classList.add("locked");
-          card.innerHTML = `
-            ${teamHTML(homeTeam, homeData, 'home')}
-            <div style="flex:0 0 auto;text-align:center;">
-              <strong>${existingPred[3]} - ${existingPred[4]}</strong>
-              <div style="font-size:0.8rem;color:#666;">Points: ${existingPred[5] || "-"}</div>
-            </div>
-            ${teamHTML(awayTeam, awayData, 'away')}
-          `;
+          if (alreadyPlayed) {
+            card.innerHTML = `
+              ${teamHTML(homeTeam, homeData, 'home')}
+              <div style="flex:0 0 auto;text-align:center;">
+                <strong>${existingPred[3]} - ${existingPred[4]}</strong>
+                <div style="font-size:0.8rem;color:#666;">Points: ${existingPred[5] || "-"}</div>
+                <div style="flex:0 0 auto;text-align:center;">
+                  <strong>${m[4]} - ${m[5]}</strong>
+                  <div style="font-size:0.8rem;color:#666;">Match finished</div>
+                </div>
+              </div>
+              ${teamHTML(awayTeam, awayData, 'away')}
+            `;
+          } else { 
+            card.innerHTML = `
+              ${teamHTML(homeTeam, homeData, 'home')}
+              <div style="flex:0 0 auto;text-align:center;">
+                <strong>${existingPred[3]} - ${existingPred[4]}</strong>
+                <div style="font-size:0.8rem;color:#666;">Points: ${existingPred[5] || "-"}</div>
+              </div>
+              ${teamHTML(awayTeam, awayData, 'away')}
+            `; 
+          }
         } else if (isCurrentGW && !alreadyPlayed) {
           canPredict = true;
           card.innerHTML = `
@@ -300,8 +315,8 @@
             ${teamHTML(homeTeam, homeData, 'home')}
             <div style="flex:0 0 auto;text-align:center;">
               <strong>${m[4]} - ${m[5]}</strong>
+              <div style="font-size:0.8rem;color:#666;">Match finished</div>
             </div>
-            <div style="flex:0 0 auto;text-align:center;color:#888;">Match finished</div>
             ${teamHTML(awayTeam, awayData, 'away')}
           `;
         } else {
