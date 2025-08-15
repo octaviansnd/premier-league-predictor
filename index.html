@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Premier League Predictions</title>
+</head>
+<body>
+  <h1>Premier League Predictions</h1>
+
+  <div id="userSelect">
+    <label>Select your name: 
+      <select id="userDropdown"></select>
+    </label>
+    <button id="addUserBtn">Add New User</button>
+  </div>
+
+  <div id="matches"></div>
+  <button id="savePredictions" style="display:none;">Save Predictions</button>
+
+  <h2>Leaderboard</h2>
+  <div id="leaderboard"></div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbyoC10L6jYcYW6MmTPoA1646nftR0ZvTKLUCm5QkZvgVuv6xfwEWLHABboM_wNeKPUCHQ/exec";
+    let currentUser = null;
+    let currentGameweek = 1;
+
+    async function fetchSheet(sheet) {
+      const res = await fetch(`${API_URL}?sheet=${sheet}`);
+      return res.json();
+    }
+
+    async function loadUsers() {
+      const users = await fetchSheet("Users");
+      const dropdown = document.getElementById("userDropdown");
+      dropdown.innerHTML = "";
+      users.slice(1).forEach(u => {
+        const opt = document.createElement("option");
+        opt.value = u[0];
+        opt.textContent = u[0];
+        dropdown.appendChild(opt);
+      });
+    }
+
+    async function loadMatches() {
+      const matches = await fetchSheet("Matches");
+      const container = document.getElementById("matches");
+      container.innerHTML = "<h2>Current Matches</h2>";
+      matches.slice(1).filter(m => m[0] == currentGameweek).forEach(m => {
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <label>${m[2]} vs ${m[3]}: 
+          <input type="number" min="0" id="predHome-${m[1]}" style="width:40px;">
+          <input type="number" min="0" id="predAway-${m[1]}" style="width:40px;">
+          </label>
+        `;
+        container.appendChild(div);
+      });
+      document.getElementById("savePredictions").style.display = "block";
+    }
+
+    async function savePredictions() {
+      const matches = await fetchSheet("Matches");
+      for (const m of matches.slice(1).filter(m => m[0] == currentGameweek)) {
+        const predHome = document.getElementById(`predHome-${m[1]}`).value;
+        const predAway = document.getElementById(`predAway-${m[1]}`).value;
+        if (predHome !== "" && predAway !== "") {
+          await fetch(`${API_URL}?action=addPrediction`, {
+            method: "POST",
+            body: JSON.stringify({
+              gameweek: m[0],
+              matchId: m[1],
+              name: currentUser,
+              predHome: parseInt(predHome),
+              predAway: parseInt(predAway)
+            })
+          });
+        }
+      }
+      alert("Predictions saved!");
+    }
+
+    async function loadLeaderboard() {
+      const preds = await fetchSheet("Predictions");
+      const scores = {};
+      preds.slice(1).forEach(p => {
+        scores[p[2]] = (scores[p[2]] || 0) + (parseInt(p[5]) || 0);
+      });
+      const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
+      const container = document.getElementById("leaderboard");
+      container.innerHTML = sorted.map(([name, points]) => `${name}: ${points}`).join("<br>");
+    }
+
+    document.getElementById("addUserBtn").addEventListener("click", async () => {
+      const name = prompt("Enter new user name:");
+      if (name) {
+        await fetch(`${API_URL}?action=addUser&name=${encodeURIComponent(name)}`, { method: "POST" });
+        await loadUsers();
+        document.getElementById("userDropdown").value = name;
+      }
+    });
+
+    document.getElementById("userDropdown").addEventListener("change", (e) => {
+      currentUser = e.target.value;
+      loadMatches();
+      loadLeaderboard();
+    });
+
+    document.getElementById("savePredictions").addEventListener("click", savePredictions);
+
+    (async () => {
+      await loadUsers();
+      currentUser = document.getElementById("userDropdown").value;
+      loadMatches();
+      loadLeaderboard();
+    })();
+  </script>
+</body>
+</html>
