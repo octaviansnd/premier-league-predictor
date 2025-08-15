@@ -4,35 +4,174 @@
   <meta charset="UTF-8">
   <title>Premier League Predictions</title>
   <style>
-    #loading { font-size: 1.2em; font-weight: bold; }
-    input[disabled] { background-color: #eee; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #1e3799;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    header p {
+      margin: 0;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    #controls {
+      background: white;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      border-bottom: 1px solid #ddd;
+    }
+    select, button {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      background: #1e3799;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0c2461;
+    }
+    #matches {
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .match-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .match-info {
+      flex: 1;
+    }
+    .score-inputs {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .score-inputs input {
+      width: 40px;
+      text-align: center;
+      padding: 0.3rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .locked {
+      background: #eee;
+    }
+    #leaderboard {
+      background: white;
+      max-width: 600px;
+      margin: 1rem auto;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    #leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #leaderboard th, #leaderboard td {
+      padding: 0.5rem;
+      text-align: left;
+    }
+    #leaderboard tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+    .highlight {
+      background: #d1f0ff !important;
+    }
+    /* Loading overlay */
+    #loadingOverlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(255,255,255,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      font-size: 1.2rem;
+    }
+    .match-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 1rem;
+    }
+    .match-card.locked {
+      opacity: 0.85;
+    }
+    .score-inputs input {
+      width: 50px;
+      text-align: center;
+      padding: 0.4rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+    }
+    .score-inputs input:focus {
+      border-color: #1e3799;
+      outline: none;
+    }
   </style>
 </head>
 <body>
-  <h1>Premier League Predictions</h1>
+  <header>
+    <h1>Premier League Predictions</h1>
+    <p>Make your predictions. No edits once submitted!</p>
+  </header>
 
-  <div id="loading">Loading...</div>
-
-  <div id="content" style="display:none;">
-    <div>
-      <label>Select your name: 
-        <select id="userDropdown"></select>
-      </label>
-      <button id="addUserBtn">Add New User</button>
-    </div>
-
-    <div>
-      <label>Select Gameweek: 
-        <select id="gameweekDropdown"></select>
-      </label>
-    </div>
-
-    <div id="matches"></div>
+  <div id="controls">
+    <label>
+      User:
+      <select id="userDropdown"></select>
+    </label>
+    <button id="addUserBtn">Add New User</button>
+    <label>
+      Gameweek:
+      <select id="gameweekDropdown"></select>
+    </label>
     <button id="savePredictions" style="display:none;">Save Predictions</button>
-
-    <h2>Leaderboard</h2>
-    <div id="leaderboard"></div>
   </div>
+
+  <div id="matches"></div>
+
+  <div id="leaderboard">
+    <h2>Leaderboard</h2>
+    <table>
+      <thead>
+        <tr><th>Rank</th><th>User</th><th>Points</th></tr>
+      </thead>
+      <tbody id="leaderboardBody"></tbody>
+    </table>
+  </div>
+
+  <div id="loadingOverlay">Loading...</div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbyoC10L6jYcYW6MmTPoA1646nftR0ZvTKLUCm5QkZvgVuv6xfwEWLHABboM_wNeKPUCHQ/exec";
@@ -41,14 +180,8 @@
     let allMatches = [];
     let allPredictions = [];
 
-    function showLoading() {
-      document.getElementById("loading").style.display = "block";
-      document.getElementById("content").style.display = "none";
-    }
-
-    function hideLoading() {
-      document.getElementById("loading").style.display = "none";
-      document.getElementById("content").style.display = "block";
+    function showLoading(show = true) {
+      document.getElementById("loadingOverlay").style.display = show ? "flex" : "none";
     }
 
     async function fetchSheet(sheet) {
@@ -90,42 +223,93 @@
       dropdown.value = currentGameweek;
     }
 
+    const TEAM_DATA = {
+      "Arsenal": "https://resources.premierleague.com/premierleague/badges/25/t3.png",
+      "Aston Villa": "https://resources.premierleague.com/premierleague/badges/25/t7.png",
+      "Bournemouth": "https://resources.premierleague.com/premierleague/badges/25/t91.png",
+      "Brentford": "https://resources.premierleague.com/premierleague/badges/25/t94.png",
+      "Brighton": "https://resources.premierleague.com/premierleague/badges/25/t36.png",
+      "Chelsea": "https://resources.premierleague.com/premierleague/badges/25/t8.png",
+      "Crystal Palace": "https://resources.premierleague.com/premierleague/badges/25/t31.png",
+      "Everton": "https://resources.premierleague.com/premierleague/badges/25/t11.png",
+      "Fulham": "https://resources.premierleague.com/premierleague/badges/25/t54.png",
+      "Leeds United": "https://resources.premierleague.com/premierleague/badges/25/t95.png",
+      "Liverpool": "https://resources.premierleague.com/premierleague/badges/25/t14.png",
+      "Manchester City": "https://resources.premierleague.com/premierleague/badges/25/t43.png",
+      "Manchester United": "https://resources.premierleague.com/premierleague/badges/25/t1.png",
+      "Newcastle United": "https://resources.premierleague.com/premierleague/badges/25/t4.png",
+      "Nottingham Forest": "https://resources.premierleague.com/premierleague/badges/25/t17.png",
+      "Sunderland": "https://resources.premierleague.com/premierleague/badges/25/t96.png",
+      "Tottenham Hotspur": "https://resources.premierleague.com/premierleague/badges/25/t6.png",
+      "West Ham United": "https://resources.premierleague.com/premierleague/badges/25/t21.png",
+      "Wolverhampton Wanderers": "https://resources.premierleague.com/premierleague/badges/25/t39.png",
+      "Burnley": "https://resources.premierleague.com/premierleague/badges/25/t97.png"
+    };
+
     function renderMatches() {
       const container = document.getElementById("matches");
       container.innerHTML = "";
-      const isCurrentGW = parseInt(document.getElementById("gameweekDropdown").value) === currentGameweek;
-      const gwMatches = allMatches.slice(1).filter(m => parseInt(m[0]) === parseInt(document.getElementById("gameweekDropdown").value));
-
+      const selectedGW = parseInt(document.getElementById("gameweekDropdown").value);
+      const isCurrentGW = selectedGW === currentGameweek;
+      const gwMatches = allMatches.slice(1).filter(m => parseInt(m[0]) === selectedGW);
       const userPreds = allPredictions.slice(1).filter(p => p[2] === currentUser);
 
+      let canPredict = false;
+
       gwMatches.forEach(m => {
+        const card = document.createElement("div");
+        card.classList.add("match-card");
+
+        const homeTeam = m[2];
+        const awayTeam = m[3];
+        const homeData = TEAM_DATA[homeTeam] || {};
+        const awayData = TEAM_DATA[awayTeam] || {};
         const existingPred = userPreds.find(p => parseInt(p[1]) === m[1] && parseInt(p[0]) === parseInt(m[0]));
-        const div = document.createElement("div");
+
+        const teamHTML = (teamName, teamInfo, side) => `
+          <div style="display:flex;align-items:center;gap:0.5rem;${side==='home'?'flex-direction:row;':'flex-direction:row-reverse;'}">
+            <img src="${teamInfo.logo}" alt="${teamName}" style="width:40px;height:40px;border-radius:50%;background:white;border:2px solid ${teamInfo.color || '#ccc'};">
+            <span style="font-weight:bold;color:${teamInfo.color || '#000'}">${teamName}</span>
+          </div>
+        `;
 
         if (existingPred) {
-          div.innerHTML = `<strong>${m[2]} vs ${m[3]}:</strong> ${existingPred[3]} - ${existingPred[4]} (Points: ${existingPred[5] || "-"})`;
+          card.classList.add("locked");
+          card.innerHTML = `
+            ${teamHTML(homeTeam, homeData, 'home')}
+            <div style="flex:0 0 auto;text-align:center;">
+              <strong>${existingPred[3]} - ${existingPred[4]}</strong>
+              <div style="font-size:0.8rem;color:#666;">Points: ${existingPred[5] || "-"}</div>
+            </div>
+            ${teamHTML(awayTeam, awayData, 'away')}
+          `;
         } else if (isCurrentGW) {
-          div.innerHTML = `
-            <label>${m[2]} vs ${m[3]}:
-            <input type="number" min="0" id="predHome-${m[1]}" style="width:40px;">
-            <input type="number" min="0" id="predAway-${m[1]}" style="width:40px;">
-            </label>
+          canPredict = true;
+          card.innerHTML = `
+            ${teamHTML(homeTeam, homeData, 'home')}
+            <div class="score-inputs" style="flex:0 0 auto;">
+              <input type="number" min="0" id="predHome-${m[1]}" placeholder="H">
+              <input type="number" min="0" id="predAway-${m[1]}" placeholder="A">
+            </div>
+            ${teamHTML(awayTeam, awayData, 'away')}
           `;
         } else {
-          div.innerHTML = `<strong>${m[2]} vs ${m[3]}:</strong> No prediction`;
+          card.classList.add("locked");
+          card.innerHTML = `
+            ${teamHTML(homeTeam, homeData, 'home')}
+            <div style="flex:0 0 auto;text-align:center;color:#888;">No prediction</div>
+            ${teamHTML(awayTeam, awayData, 'away')}
+          `;
         }
-        container.appendChild(div);
+
+        container.appendChild(card);
       });
 
-      document.getElementById("savePredictions").style.display = isCurrentGW && gwMatches.some(m => {
-        return !userPreds.find(p => parseInt(p[1]) === m[1] && parseInt(p[0]) === parseInt(m[0]));
-      }) ? "block" : "none";
+      document.getElementById("savePredictions").style.display = canPredict ? "inline-block" : "none";
     }
 
     async function savePredictions() {
       const gwMatches = allMatches.slice(1).filter(m => parseInt(m[0]) === currentGameweek);
-
-      // Check if all predictions are filled
       const incomplete = gwMatches.some(m => {
         const inputHome = document.getElementById(`predHome-${m[1]}`);
         const inputAway = document.getElementById(`predAway-${m[1]}`);
@@ -135,15 +319,11 @@
         alert("Please predict every match before submitting.");
         return;
       }
-
-      // Confirm before submission
       if (!confirm("Are you sure? You cannot edit predictions once submitted.")) {
         return;
       }
-
-      let allSuccess = true;
+      showLoading(true);
       let duplicateCount = 0;
-
       for (const m of gwMatches) {
         const predHome = document.getElementById(`predHome-${m[1]}`).value;
         const predAway = document.getElementById(`predAway-${m[1]}`).value;
@@ -161,23 +341,15 @@
           const text = await res.text();
           if (text.includes("Prediction already exists")) {
             duplicateCount++;
-            allSuccess = false;
-          } else if (!text.includes("Prediction added")) {
-            allSuccess = false;
           }
         }
       }
-
+      showLoading(false);
       if (duplicateCount > 0) {
-        alert(`${duplicateCount} prediction(s) were not saved because they already exist.`);
-      }
-
-      if (allSuccess) {
+        alert(`${duplicateCount} predictions were not saved (already exist).`);
+      } else {
         alert("Predictions saved!");
-      } else if (duplicateCount === 0) {
-        alert("Some predictions could not be saved due to an error.");
       }
-
       await reloadData();
     }
 
@@ -188,18 +360,24 @@
         scores[p[2]] = (scores[p[2]] || 0) + (parseInt(p[5]) || 0);
       });
       const sorted = Object.entries(scores).sort((a,b) => b[1] - a[1]);
-      const container = document.getElementById("leaderboard");
-      container.innerHTML = sorted.map(([name, points]) => `${name}: ${points}`).join("<br>");
+      const tbody = document.getElementById("leaderboardBody");
+      tbody.innerHTML = "";
+      sorted.forEach(([name, points], i) => {
+        const tr = document.createElement("tr");
+        if (name === currentUser) tr.classList.add("highlight");
+        tr.innerHTML = `<td>${i+1}</td><td>${name}</td><td>${points}</td>`;
+        tbody.appendChild(tr);
+      });
     }
 
     async function reloadData() {
-      showLoading();
+      showLoading(true);
       await loadMatches();
       await loadPredictions();
       setupGameweekDropdown();
       renderMatches();
       loadLeaderboard();
-      hideLoading();
+      showLoading(false);
     }
 
     document.getElementById("addUserBtn").addEventListener("click", async () => {
@@ -225,7 +403,7 @@
     document.getElementById("savePredictions").addEventListener("click", savePredictions);
 
     (async () => {
-      showLoading();
+      showLoading(true);
       await loadUsers();
       await loadMatches();
       await loadPredictions();
@@ -235,7 +413,7 @@
       setupGameweekDropdown();
       renderMatches();
       loadLeaderboard();
-      hideLoading();
+      showLoading(false);
     })();
   </script>
 </body>
