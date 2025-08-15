@@ -274,7 +274,7 @@
           </div>
         `;
 
-        if (existingPred && !alreadyPlayed) {
+        if (existingPred || alreadyPlayed) {
           card.classList.add("locked");
           card.innerHTML = `
             ${teamHTML(homeTeam, homeData, 'home')}
