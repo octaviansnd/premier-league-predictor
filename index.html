@@ -265,7 +265,7 @@
         const homeData = TEAM_DATA[homeTeam] || {};
         const awayData = TEAM_DATA[awayTeam] || {};
         const existingPred = userPreds.find(p => parseInt(p[1]) === m[1] && parseInt(p[0]) === parseInt(m[0]));
-        const alreadyPlayed = parseInt(m[6]) == 1; // Check if match was already played
+        const alreadyPlayed = parseInt(m[6]) === 1; // Check if match was already played
 
         const teamHTML = (teamName, teamInfo, side) => `
           <div style="display:flex;align-items:center;gap:0.5rem;${side==='home'?'flex-direction:row;':'flex-direction:row-reverse;'}">
@@ -274,7 +274,7 @@
           </div>
         `;
 
-        if (existingPred || alreadyPlayed) {
+        if (existingPred && !alreadyPlayed) {
           card.classList.add("locked");
           card.innerHTML = `
             ${teamHTML(homeTeam, homeData, 'home')}
