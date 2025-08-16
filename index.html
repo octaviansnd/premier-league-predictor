@@ -335,7 +335,7 @@
     }
 
     async function savePredictions() {
-      const gwMatches = allMatches.slice(1).filter(m => parseInt(m[0]) === currentGameweek && parseInt(m[6]) !== 0);
+      const gwMatches = allMatches.slice(1).filter(m => parseInt(m[0]) === currentGameweek && !(parseInt(m[6]) === 1));
       const incomplete = gwMatches.some(m => {
         const inputHome = document.getElementById(`predHome-${m[1]}`);
         const inputAway = document.getElementById(`predAway-${m[1]}`);
