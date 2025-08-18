@@ -352,6 +352,7 @@
       showLoading(true);
       let duplicateCount = 0;
       for (const m of gwMatches) {
+        if (parseInt(m[6]) === 1) continue; // Skip already played matches
         const predHome = document.getElementById(`predHome-${m[1]}`).value;
         const predAway = document.getElementById(`predAway-${m[1]}`).value;
         if (predHome !== "" && predAway !== "") {
